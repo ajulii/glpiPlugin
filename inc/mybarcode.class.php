@@ -94,8 +94,15 @@ class PluginMyBarcodeMyBarcode extends CommonDBTM
                     $query = "select f.field from field_add_type f where upper(f.itemtype)=Upper('" . $type . "') and f.items_id =" . $item->getID();
                     $result = $DB->query($query);
                     $invbuh = $DB->fetch_row($result);
+                    $typeP=$type;
+                     if ($type=='Printer'){
+                        /*$res = $DB->query("SELECT t.name FROM glpi_printers p, glpi_printertypes t WHERE p.is_deleted = '0' AND p.`is_template` = '0' and p.printertypes_id= t.id and p.id =". $item->getID());
+                        $typear=$DB->fetch_row($res);
+                        $type=$typear[0];*/
+                         $typeP="Принт/Скан";
+                     };
                     $pdf->Write(0, "Тлф. АСУП 73-79   ".date("Y-m-d"), '', 0, $p, true, 0, false, false, 0);
-                    $pdf->Write(0, $type . '-' . $item->getField('name'), '', 0, $p, true, 0, false, true, 0);
+                    $pdf->Write(0, $typeP . '-' . $item->getField('name'), '', 0, $p, true,0, false, true, 0);
                     $pdf->write1DBarcode($code, 'C39E', '', '', 64, 15, 1, $style, 'N');
                     $pdf->Write(0, 'Инв. Бух. №' . $invbuh[0], '', 0, $p, true, 0, false, false, 0);
                     $pdf->Write(0, 'Серийный  №' . $item->getField('serial'), '', 0, $p, true, 0, false, false, 0);
