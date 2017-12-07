@@ -50,18 +50,20 @@ class PluginMyBarcodeMyBarcode extends CommonDBTM
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
         $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
-        $pdf->SetMargins(5,5);
+        $pdf->SetMargins(5, 5,5,5);
         $pdf->SetHeaderMargin(5);
         $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+        $pdf->SetAutoPageBreak(false, PDF_MARGIN_BOTTOM);
         $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
-        //$pdf->setBarcode(date('Y-m-d H:i:s'));
+        $pdf->setBarcode(date('Y-m-d H:i:s'));
         $pdf->SetFont('dejavuserifcondensed', '', 10);
         $style = array('position' => '', 'align' => 'C', 'stretch' => false, 'fitwidth' => true, 'cellfitalign' => '', 'border' => false, 'hpadding' => 0,
                        'vpadding' => 1, 'fgcolor' => array(0, 0, 0), 'bgcolor' => false, 'text' => true, 'font' => 'dejavuserifcondensed', 'fontsize' => 10, 'stretchtext' => 1);
+        $style2 = array('width' => 0.6, 'cap' => 'round', 'join' => 'round', 'dash' => '2,10');
+        $style3 = array('width' => 0.5, 'cap' => 'round', 'join' => 'round', 'dash' => '2,10');
         $pdf->AddPage();
-        $pdf->Line(71,1,71,290);
-        $pdf->Line(139,1,139,290);
+        $pdf->Line(71, 1, 71, 290,$style3);
+        $pdf->Line(139, 1, 139, 290,$style3);
         $n = 0;
         $hh = 5;
         foreach ($ids as $key) {
@@ -75,6 +77,7 @@ class PluginMyBarcodeMyBarcode extends CommonDBTM
                         case 1 :
                             $style['position'] = 'L';
                             $p = 'L';
+                            $x=5;
                             break;
                         case 2 :
                             $style['position'] = 'C';
@@ -86,41 +89,35 @@ class PluginMyBarcodeMyBarcode extends CommonDBTM
                             $n = 0;
                             $hh = $hh + 35;
                             break;
-
                     }
                     $type = $item->getType();
                     $query = "select f.field from field_add_type f where upper(f.itemtype)=Upper('" . $type . "') and f.items_id =" . $item->getID();
-                    $ req = $ DB -> request ( ... );
-                        if ( $ row = $ req -> next ()) {
-                    // ... работаем в одной строке
-                    }
                     $result = $DB->query($query);
                     $invbuh = $DB->fetch_row($result);
+                    $pdf->Write(0, "Тлф. АСУП 73-79   ".date("Y-m-d"), '', 0, $p, true, 0, false, false, 0);
                     $pdf->Write(0, $type . '-' . $item->getField('name'), '', 0, $p, true, 0, false, true, 0);
                     $pdf->write1DBarcode($code, 'C39E', '', '', 64, 15, 1, $style, 'N');
                     $pdf->Write(0, 'Инв. Бух. №' . $invbuh[0], '', 0, $p, true, 0, false, false, 0);
                     $pdf->Write(0, 'Серийный  №' . $item->getField('serial'), '', 0, $p, true, 0, false, false, 0);
-                    $pdf->Line(1,$hh-5,210,$hh-5);
                     $pdf->SetY($hh);
-                    if ($hh > 250) {
-                        $hh = 10;
+                    $pdf->Line(1, $hh-1, 210, $hh-1,$style2);
+                    if ($hh > 280) {
+                        $hh = 5;
                         $pdf->AddPage();
+                        $pdf->Line(71, 1, 71, 290,$style3);
+                        $pdf->Line(139, 1, 139, 290,$style3);
                     }
                 }
             }
         }
         $file = $pdf->Output('ddd.pdf', 'S');
-        $pdfFile = GLPI_PLUGIN_DOC_DIR . '/mybarcode/' . $type . '.pdf';
+        $pdfFile = GLPI_ROOT . "/files/_plugins/mybarcode/" . $type . '.pdf';
         if (file_exists($pdfFile)) unlink($pdfFile);
         file_put_contents($pdfFile, $file);
         $filePath = explode('/', $pdfFile);
         $filename = $filePath[count($filePath) - 1];
-        $msg = "<a href='" . $CFG_GLPI['root_doc'] . '/plugins/mybarcode/front/send.php?file=' . urlencode($filename)
-               . "'>" . __('Generated file', 'barcode') . "</a>";
-
+        $msg = "<a href='".$CFG_GLPI['root_doc'].'/plugins/mybarcode/front/send.php?file='.urlencode($filename)."'>".__('Generated file', 'barcode')."</a >";
         Session::addMessageAfterRedirect($msg);
-
-
         $ma->itemDone($item->getType(), 0, MassiveAction::ACTION_OK);
 
         parent::processMassiveActionsForOneItemtype($ma, $item, $ids);
